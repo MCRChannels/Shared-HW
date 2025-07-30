@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<style>
+    body {
+        background-color: #ffffff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    header h1 {
+        font-weight: bold;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        height: 100%;
+    }
+
+    .card-body {
+        background-color: #ffffff;
+    }
+
+    .table th,
+    .table td {
+        vertical-align: middle;
+    }
+
+    #SLwarning {
+        background-color: #f4f5d0;
+    }
+
+    #purchase-item{
+        background-color: #f0f0f0;
+    }
+
+    #TotalBox{
+        color: #1f4658;
+        background-color: #e1fafd;
+    }
+
+    #isCheckedBox{
+        background-color: #f4f5e8;
+    }
+
+</style>
+
+<body>
+    <header class="container">
+        <h1 class="text-center mt-5">Store Simulator</h1>
+    </header>
+
+    <div class="container store-section mt-4">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                📦คลังสินค้า
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th scope="col">ID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Price</th>
+                                            <th scope="col">Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="product-table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white">
+                                🛒ตะกร้าสินค้าของ K.สมศักดิ์
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cart-table">
+                                    </tbody>
+                                </table>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-primary btn-lg process-button" id="submit">
+                                        ประมวลผลคำสั่งซื้อ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-black d-flex flex-column justify-content-center"
+                        id="process-result">
+                        <h5 class="text-center">📃ผลลัพธ์การประมวลผล</h5>
+                        <p class="text-center">ผลลัพธ์จะแสดงหลังจากกดปุ่ม "ประมวลผลคำสั่งซื้อ"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const products = [
+                { id: 101, name: 'หูฟังบลูทูธ Sony', category: 'Electronics', price: 4590, stock: 15 },
+                { id: 102, name: 'คีย์บอร์ด Mechanical', category: 'Electronics', price: 2800, stock: 8 },
+                { id: 201, name: 'หนังสือ The Pragmatic Programmer', category: 'Books', price: 850, stock: 30 },
+                { id: 202, name: 'หนังสือ Clean Code', category: 'Books', price: 799, stock: 0 },
+                { id: 301, name: 'แก้วกาแฟ Starbucks', category: 'Lifestyle', price: 550, stock: 25 }
+            ];
+
+            const user = {
+                name: 'สมศักดิ์',
+                shoppingCart: [
+                    { productId: 101, quantity: 1 },
+                    { productId: 201, quantity: 2 },
+                    { productId: 102, quantity: 1 },
+                    { productId: 202, quantity: 1 },
+                ]
+            };
+
+            const productsTableBody = document.getElementById("product-table");
+            const cartTableBody = document.getElementById("cart-table");
+            const processButton = document.getElementById("submit");
+            const processResult = document.getElementById("process-result");
+
+            const loadDataProduct = () => {
+                productsTableBody.innerHTML = products.map((p) =>
+                    `<tr>
+                        <th scope="row">${p.id}</th>
+                        <td>${p.name}</td>
+                        <td>${p.price}</td>
+                        <td class="${p.stock === 0 ? "text-danger" : "text-black"}">${p.stock}</td>
+                    </tr>`
+                ).join("");
+
+                cartTableBody.innerHTML = user.shoppingCart.map((p) =>
+                    `<tr>
+                        <th scope="row">${p.productId}</th>
+                        <td>${p.quantity}</td>
+                    </tr>`
+                ).join("");
+
+                processButton.addEventListener('click', () => {
+                    let TotalAmount = 0;
+                    let OutofStock = [];
+
+                    if (processButton.innerText === 'เริ่มใหม่') {
+                        location.reload();
+                        return;
+                    }
+
+                    let SystemlogHTML =
+                        `
+                        <h5 class="mt-1 ms-2"><strong>ใบสรุปคำสั่งซื้อขอบคุณ สมศักดิ์</strong></h5>
+                        <hr>
+                        <h6"><strong>System Log: </strong></h6>
+                        `
+
+                    let PurchaseHTML =
+                        `<h6><br><strong>รายการสินค้าที่พร้อมจัดส่ง: </strong></h6>`
+
+                    let Availableproducts = [];
+
+                    user.shoppingCart.forEach((item) => {
+                        const product = products.find((p) => p.id === item.productId);
+
+                        if (product) {
+                            if (product.stock >= item.quantity) {
+                                Availableproducts.push({
+                                    name: product.name,
+                                    price: product.price,
+                                    quantity: item.quantity,
+                                    TotalAmount: item.quantity * product.price
+                                });
+                            } else {
+                                OutofStock.push(product.name);
+                            }
+                        }
+                    })
+                    Availableproducts.sort((a, b) => b.price - a.price);
+
+                    Availableproducts.forEach((item) => {
+                        TotalAmount += item.TotalAmount;
+
+                        PurchaseHTML +=
+                            `
+                        <li class="border rounded-2 mb-2 p-2 d-flex justify-content-between" id="purchase-item">
+                            <div class="text-start justify-content-start">
+                                <span class="fw-semibold">${item.name}</span>
+                                <div class="text-secondary">${item.price} x ${item.quantity}</div>
+                            </div>
+                                <span class="fw-semibold align-content-center">${item.TotalAmount.toLocaleString()} บาท</span>
+                        </li>
+                        `
+                    })
+
+                    const isOverThousand = user.shoppingCart.every((user) => {
+                        const userproduct = products.find((p) => {
+                            p.id === user.productId
+                        })
+                        return userproduct && userproduct.price > 1000;
+                    })
+
+                    const isBooked = user.shoppingCart.some(cartItem => {
+                        const product = products.find(p => p.id === cartItem.productId);
+                        return product && product.name.includes('หนังสือ');
+                    });
+
+                    PurchaseHTML +=
+                        `
+                    <div class="row">
+                        <div class="col border m-3 p-2 rounded-2 text-center align-content-center" id="TotalBox">
+                            <p>ยอดรวมสุทธิ</p>
+                            <h4><strong>${TotalAmount.toLocaleString()} บาท</strong></h4>
+                        </div>
+                        <div class="col border m-3 p-2 rounded-2 text-center align-content-center" id="isCheckedBox">
+                            <h6>Cart Insights</h6>
+                            <div class"text-start mt-3">
+                                <p>สินค้าทุกชิ้นราคาตั้งแต่ 1,000 บาทขึ้นไป:
+                                    <span class="${isOverThousand ? 'text-success fw-bold' : 'text-danger fw-bold'}">
+                                        ${isOverThousand ? 'ใช่' : 'ไม่ใช่'}
+                                    </span>
+                                </p>
+                                <p>มีสินค้าหมวดหนังสือหรือไม่:
+                                    <span class="${isBooked ? 'text-success fw-bold' : 'text-danger fw-bold'}">
+                                        ${isBooked ? 'ใช่' : 'ไม่ใช่'}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    `
+
+                    if (OutofStock.length > 0) {
+                        SystemlogHTML +=
+                            `
+                            <div class="border-start border-3 border-warning text-warning-emphasis p-2" id="SLwarning">
+                                ⚠️สินค้า "${OutofStock.map(name => `${name}`).join("<br>")}" ไม่พร้อมจำหน่าย (อาจจะหมดสต็อก)
+                            </div>
+                        `
+                    } else {
+                        SystemlogHTML += `<p class="text-success">ทำรายการสำเร็จ ไม่มีสินค้าหมด</p>`;
+                    }
+
+                    const resultHtml = SystemlogHTML + PurchaseHTML;
+                    processButton.innerText = 'เริ่มใหม่';
+                    processResult.innerHTML = resultHtml;
+
+                })
+
+            };
+
+
+            loadDataProduct();
+        });
+    </script>
+</body>
+
+</html>
